@@ -1,0 +1,7 @@
+{
+  "name": "moss-gemini-annotation-web",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local team annotation UI for the completed MOSS + Gemini 3.7 Flash run",
+  "scripts": { "start": "node server.js" }
+}

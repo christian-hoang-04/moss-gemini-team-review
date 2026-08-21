@@ -52,7 +52,7 @@ function segmentRowWithAdditions(sample, segment) {
     if (index < baseWords.length - 1) { const insertionSelected = state.selectedInsertion?.chunkId === sample.chunkId && state.selectedInsertion.segmentIndex === segment.index && state.selectedInsertion.afterWordIndex === word.index; rendered.push(`<button class="add-word ${insertionSelected ? 'selected' : ''}" data-add-between="${word.index}" data-segment="${segment.index}" title="Add a word here">+</button>`); }
   });
   const words = rendered.join(' ');
-  return `<tr class="${selected ? 'selected' : ''}" data-segment="${segment.index}"><td class="time"><button class="time-link" data-seek="${current.start}">${fmt(current.start)}â€“${fmt(current.end)}</button></td><td class="speaker">${esc(current.speaker)}</td><td class="word-cell">${words}</td></tr>`;
+  return `<tr class="${selected ? 'selected' : ''}" data-segment="${segment.index}"><td class="time"><button class="time-link" data-seek="${current.start}">${fmt(current.start)}-${fmt(current.end)}</button></td><td class="speaker">${esc(current.speaker)}</td><td class="word-cell">${words}</td></tr>`;
 }
 function segmentRowUpdated(sample, segment) {
   const current = segment, selected = segment.index === state.segment, flagged = new Set(pendingWordIndexes(sample.chunkId, segment.index));
@@ -64,7 +64,7 @@ function segmentRowUpdated(sample, segment) {
     const statusClass = deletion ? 'deleted' : correction ? 'changed' : flagged.has(word.index) ? 'cannot-hear' : '';
     return `<span class="word-wrap"><button class="word-token ${statusClass} ${selectedWordState ? 'selected-word' : ''}" data-word="${word.index}" data-segment="${segment.index}" title="Click to select and choose an action">${esc(displayWord)}</button></span>`;
   }).join(' ');
-  return `<tr class="${selected ? 'selected' : ''}" data-segment="${segment.index}"><td class="time"><button class="time-link" data-seek="${current.start}">${fmt(current.start)}â€“${fmt(current.end)}</button></td><td class="speaker">${esc(current.speaker)}</td><td class="word-cell">${words}</td></tr>`;
+  return `<tr class="${selected ? 'selected' : ''}" data-segment="${segment.index}"><td class="time"><button class="time-link" data-seek="${current.start}">${fmt(current.start)}-${fmt(current.end)}</button></td><td class="speaker">${esc(current.speaker)}</td><td class="word-cell">${words}</td></tr>`;
 }
 function segmentRow(sample, segment) {
   const current = segment, selected = segment.index === state.segment, flagged = new Set(pendingWordIndexes(sample.chunkId, segment.index));

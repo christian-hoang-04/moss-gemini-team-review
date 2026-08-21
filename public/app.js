@@ -49,7 +49,7 @@ function segmentRowWithAdditions(sample, segment) {
       rendered.push(`<span class="word-wrap"><button class="word-token ${statusClass} ${selectedWordState ? 'selected-word' : ''}" data-word="${word.index}" data-segment="${segment.index}" title="Click to select and choose an action">${esc(displayWord)}</button></span>`);
     }
     additionsFor(sample.chunkId, segment.index, word.index).forEach(addition => rendered.push(`<span class="added-token" title="Added word">${esc(addition.addedWord)}</span>`));
-    if (index < baseWords.length - 1) rendered.push(`<button class="add-word" data-add-between="${word.index}" data-segment="${segment.index}" title="Add a word here">+</button>`);
+    if (index < baseWords.length - 1) { const insertionSelected = state.selectedInsertion?.chunkId === sample.chunkId && state.selectedInsertion.segmentIndex === segment.index && state.selectedInsertion.afterWordIndex === word.index; rendered.push(`<button class="add-word ${insertionSelected ? 'selected' : ''}" data-add-between="${word.index}" data-segment="${segment.index}" title="Add a word here">+</button>`); }
   });
   const words = rendered.join(' ');
   return `<tr class="${selected ? 'selected' : ''}" data-segment="${segment.index}"><td class="time"><button class="time-link" data-seek="${current.start}">${fmt(current.start)}â€“${fmt(current.end)}</button></td><td class="speaker">${esc(current.speaker)}</td><td class="word-cell">${words}</td></tr>`;

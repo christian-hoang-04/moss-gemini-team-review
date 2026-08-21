@@ -4,7 +4,7 @@ Review tool for the completed `moss_gemini_37` run. The `public/` folder is a se
 
 Review workflow: the original Gemini output is retained. Reviewers click individual words, can save a `word_disagreement` record with optional context, and can also save a `word_correction` for any selected word. Both actions are available in the same shared mode.
 
-Word actions are organized as `Change word`, `Cannot hear`, `Delete word`, or `Add word`. Additions are made only through the small `+` boundary controls between tokens; arbitrary insertion is not supported.
+Word actions are organized as `Change word`, `Cannot hear`, `Delete word`, or `Add word`. Small `+` controls appear when the pointer reaches a boundary between tokens and remain visible after that boundary is selected; arbitrary insertion outside a token boundary is not supported.
 
 Saved token states remain visible in the main label column: `Cannot hear` is red, changed words replace the displayed Gemini token, added words are blue, and deleted words disappear. The selected word keeps a bold outer boundary until another word is selected.
 

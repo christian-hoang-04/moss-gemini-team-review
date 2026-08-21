@@ -4,7 +4,7 @@ Review tool for the completed `moss_gemini_37` run. The `public/` folder is a se
 
 Review workflow: the original Gemini output is retained. Reviewers click individual words, can save a `word_disagreement` record with optional context, and can also save a `word_correction` for any selected word. Both actions are available in the same shared mode.
 
-The chunk/filter sidebar can be hidden with `Hide chunks` and its state is remembered in the browser. The word review panel sits on the right of the transcript on wide screens and moves below it on smaller screens.
+The chunk/filter sidebar can be hidden with the vertical `Hide chunks` / `Show chunks` control on the left edge; its state is remembered in the browser. The word review panel sits on the right of the transcript on wide screens and moves below it on smaller screens.
 
 Start with:
 

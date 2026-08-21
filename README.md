@@ -6,7 +6,7 @@ Review workflow: the original Gemini output is retained. Reviewers click individ
 
 Word actions are organized as `Change word`, `Cannot hear`, `Delete word`, or `Add word`. Small `+` controls appear when the pointer reaches a boundary between tokens and remain visible after that boundary is selected; arbitrary insertion outside a token boundary is not supported.
 
-Saved token states remain visible in the main label column: `Cannot hear` is red, changed words replace the displayed Gemini token, added words are blue, and deleted words disappear. The selected word keeps a bold outer boundary until another word is selected.
+Saved token states remain visible in the main label column: `Cannot hear` is red, changed words replace the displayed Gemini token, added words are blue and remain selectable for later actions, and deleted words disappear. The selected word keeps a bold outer boundary until another word is selected.
 
 The chunk/filter sidebar can be hidden with the vertical `Hide chunks` / `Show chunks` control on the left edge; its state is remembered in the browser. The word review panel sits on the right of the transcript on wide screens and moves below it on smaller screens.
 

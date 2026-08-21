@@ -19,7 +19,13 @@ function unsavedFlagIndexes(sample, segment) {
   if (state.action === 'cannot_hear' && selectedWord(sample, segment) && !saved.has(state.selectedWord.wordIndex)) pending.add(state.selectedWord.wordIndex);
   return [...pending].filter(index => !saved.has(index));
 }
-function selectedWord(sample, segment) { return state.selectedWord?.chunkId === sample.chunkId && state.selectedWord.segmentIndex === segment.index ? tokenize(segment.geminiText)[state.selectedWord.wordIndex] : null; }
+function additionWordIndex(addition) { return Number(addition.wordIndex ?? (addition.insertAfterWordIndex + 0.5)); }
+function reviewTokens(sample, segment) {
+  const tokens = [];
+  tokenize(segment.geminiText).forEach(word => { if (!deletionsFor(sample.chunkId, segment.index, word.index).at(-1)) tokens.push(word); additionsFor(sample.chunkId, segment.index, word.index).forEach(addition => { if (!deletionsFor(sample.chunkId, segment.index, additionWordIndex(addition)).at(-1)) tokens.push({ index: additionWordIndex(addition), text: addition.addedWord, additionId: addition.id, added: true }); }); });
+  return tokens;
+}
+function selectedWord(sample, segment) { return state.selectedWord?.chunkId === sample.chunkId && state.selectedWord.segmentIndex === segment.index ? reviewTokens(sample, segment).find(word => word.index === state.selectedWord.wordIndex) : null; }
 function notify(message) { const toast = $('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1800); }
 function renderSummary() { const reviewed = new Set(state.annotations.map(a => a.chunkId)); $('summary').innerHTML = [['13','chunks'], [reviewed.size,'reviewed'], [state.annotations.length,'review notes'], [new Set(state.annotations.map(a => a.annotator).filter(Boolean)).size,'annotators']].map(x => `<div class="metric"><strong>${x[0]}</strong><span>${x[1]}</span></div>`).join(''); }
 function renderAnnotatorFilter() { const old = $('annotatorFilter').value; const names = [...new Set(state.annotations.map(a => a.annotator).filter(Boolean))].sort(); $('annotatorFilter').innerHTML = '<option value="all">All annotators</option>' + names.map(n => `<option>${esc(n)}</option>`).join(''); $('annotatorFilter').value = names.includes(old) ? old : 'all'; }
@@ -53,7 +59,7 @@ function segmentRowWithAdditions(sample, segment) {
       const displayWord = correction?.correctedWord || word.text, statusClass = correction ? 'changed' : flagged.has(word.index) ? 'cannot-hear' : '';
       rendered.push(`<span class="word-wrap"><button class="word-token ${statusClass} ${selectedWordState ? 'selected-word' : ''}" data-word="${word.index}" data-segment="${segment.index}" title="Click to select and choose an action">${esc(displayWord)}</button></span>`);
     }
-    additionsFor(sample.chunkId, segment.index, word.index).forEach(addition => rendered.push(`<span class="added-token" title="Added word">${esc(addition.addedWord)}</span>`));
+    additionsFor(sample.chunkId, segment.index, word.index).forEach(addition => { const addedIndex = additionWordIndex(addition), correction = correctionsFor(sample.chunkId, segment.index, addedIndex).at(-1), deleted = deletionsFor(sample.chunkId, segment.index, addedIndex).at(-1), selectedAdded = state.selectedWord?.chunkId === sample.chunkId && state.selectedWord.segmentIndex === segment.index && state.selectedWord.wordIndex === addedIndex, displayWord = correction?.correctedWord || addition.addedWord, statusClass = deleted ? 'deleted' : correction ? 'changed' : flagged.has(addedIndex) ? 'cannot-hear' : 'added'; if (!deleted) rendered.push(`<span class="word-wrap"><button class="word-token added-token ${statusClass} ${selectedAdded ? 'selected-word' : ''}" data-word="${addedIndex}" data-segment="${segment.index}" title="Click to select and choose an action">${esc(displayWord)}</button></span>`); });
     if (index < baseWords.length - 1) { const insertionSelected = state.selectedInsertion?.chunkId === sample.chunkId && state.selectedInsertion.segmentIndex === segment.index && state.selectedInsertion.afterWordIndex === word.index; rendered.push(`<button class="add-word ${insertionSelected ? 'selected' : ''}" data-add-between="${word.index}" data-segment="${segment.index}" title="Add a word here">+</button>`); }
   });
   const words = rendered.join(' ');
@@ -98,7 +104,7 @@ function toggleWord(sample, segmentIndex, wordIndex) {
   state.selectedInsertion = null; state.selectedWord = { chunkId: sample.chunkId, segmentIndex, wordIndex }; state.segment = segmentIndex; renderDetail();
 }
 async function saveDisagreement(sample, segment, current) {
-  const indexes = unsavedFlagIndexes(sample, segment), annotator = $('annotator').value.trim(), note = $('disagreementNote').value.trim(), words = tokenize(segment.geminiText).filter(word => indexes.includes(word.index));
+  const indexes = unsavedFlagIndexes(sample, segment), annotator = $('annotator').value.trim(), note = $('disagreementNote').value.trim(), words = reviewTokens(sample, segment).filter(word => indexes.includes(word.index));
   if (!annotator || !words.length) return notify('Annotator name and at least one disagreeing word are required');
   state.annotations.push({ id: crypto.randomUUID(), kind: 'word_disagreement', chunkId: sample.chunkId, sampleId: sample.chunkId, segmentIndex: segment.index, startSeconds: current.start, endSeconds: current.end, speaker: current.speaker, originalText: segment.geminiText, words, notes: note, issueType: 'Cannot hear', annotator, status: 'open', createdAt: new Date().toISOString() });
   delete state.pendingWords[wordKey(sample.chunkId, segment.index)]; await persist(); renderAll(); renderDetail(); notify('Disagreeing words flagged for expert review');
@@ -118,7 +124,8 @@ async function saveDeletion(sample, segment, current) {
 async function saveAddition(sample, segment, current) {
   const insertion = state.selectedInsertion, addedWord = $('addLabel').value.trim(), annotator = $('annotator').value.trim();
   if (!insertion || !addedWord || !annotator) return notify('Click a + boundary, enter a word, and provide your name');
-  state.annotations.push({ id: crypto.randomUUID(), kind: 'word_addition', action: 'add', chunkId: sample.chunkId, sampleId: sample.chunkId, segmentIndex: segment.index, insertAfterWordIndex: insertion.afterWordIndex, startSeconds: current.start, endSeconds: current.end, speaker: current.speaker, originalText: segment.geminiText, addedWord, annotator, issueType: 'ASR word addition', status: 'open', createdAt: new Date().toISOString() });
+  const wordIndex = insertion.afterWordIndex + 0.5 + additionsFor(sample.chunkId, segment.index, insertion.afterWordIndex).length * 0.001;
+  state.annotations.push({ id: crypto.randomUUID(), kind: 'word_addition', action: 'add', chunkId: sample.chunkId, sampleId: sample.chunkId, segmentIndex: segment.index, insertAfterWordIndex: insertion.afterWordIndex, wordIndex, startSeconds: current.start, endSeconds: current.end, speaker: current.speaker, originalText: segment.geminiText, addedWord, annotator, issueType: 'ASR word addition', status: 'open', createdAt: new Date().toISOString() });
   state.selectedInsertion = null; await persist(); renderAll(); renderDetail(); notify('Word added at the selected boundary');
 }
 async function saveComment(sample, segment, current) {
